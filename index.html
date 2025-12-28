@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Psikolojik Maliyet Analizi</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; background: #fff; color: #000; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; border: 2px solid #000; padding: 30px; box-shadow: 10px 10px 0px #000; }
+        header { border-bottom: 4px solid #000; margin-bottom: 20px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; }
+        
+        .controls { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .input-box { border: 2px solid #000; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
+        .upload-area { border: 2px dashed #000; display: flex; align-items: center; justify-content: center; text-align: center; position: relative; cursor: pointer; font-weight: bold; }
+        .upload-area input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-card { border: 2px solid #000; padding: 15px; text-align: center; }
+        .stat-card h3 { margin: 0 0 5px 0; font-size: 11px; text-transform: uppercase; background: #000; color: #fff; padding: 4px; }
+        .stat-value { font-size: 20px; font-weight: bold; }
+        .highlight { background: #000; color: #fff; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #000; color: #fff; font-size: 11px; padding: 10px; text-transform: uppercase; }
+        td { border: 1px solid #000; padding: 8px; font-size: 13px; text-align: right; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        button { background: #000; color: #fff; border: none; padding: 8px; cursor: pointer; font-family: inherit; font-weight: bold; margin-top: 5px; }
+        
+        .zero-cost { background: #d4ff00; color: #000; padding: 2px 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>BORSA ANALİZ v3.6</h1>
+        <div style="font-size: 11px; font-weight: bold;">[ PSİKOLOJİK MALİYET ODAKLI ]</div>
+    </header>
+
+    <div class="controls">
+        <div class="upload-area">
+            JSON YÜKLE
+            <input type="file" id="jsonInput" accept=".json">
+        </div>
+        <div class="input-box">
+            <label style="font-size: 11px; font-weight: bold;">KOMİSYON (On binde):</label>
+            <input type="number" id="commissionRate" value="9" style="border: 1px solid #000; padding: 5px;">
+        </div>
+        <div class="input-box">
+            <label style="font-size: 11px; font-weight: bold;">GÜNCEL FİYAT (TL):</label>
+            <input type="number" id="currentPrice" value="0" step="0.01" style="border: 1px solid #000; padding: 5px;">
+            <button onclick="recalculate()">HESAPLA</button>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Eldeki Adet</h3>
+            <div id="remainingQty" class="stat-value">0</div>
+        </div>
+        <div class="stat-card highlight">
+            <h3>Psikolojik Maliyet</h3>
+            <div id="psyCost" class="stat-value">0,00 TL</div>
+        </div>
+        <div class="stat-card">
+            <h3>Anlık Durum (K/Z)</h3>
+            <div id="unrealizedProfit" class="stat-value">0,00 TL</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tarih</th><th>Hisse</th><th>İşlem</th><th>Fiyat</th><th>Adet</th><th>Net İşlem Tutarı</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+
+<script>
+    let rawData = [];
+    const formatTR = (num, fix = 2) => num.toLocaleString('tr-TR', { minimumFractionDigits: fix, maximumFractionDigits: fix });
+
+    document.getElementById('jsonInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => { rawData = JSON.parse(event.target.result); calculate(); };
+        reader.readAsText(file);
+    });
+
+    function recalculate() { if (rawData.length > 0) calculate(); }
+
+    function calculate() {
+        const commRate = parseFloat(document.getElementById('commissionRate').value) / 10000;
+        const currentPrice = parseFloat(document.getElementById('currentPrice').value) || 0;
+        
+        let totalQty = 0;
+        let netCashFlow = 0; 
+        
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+
+        const sorted = rawData.sort((a,b) => {
+            const dateA = a.tarih.split('/').reverse().join('-');
+            const dateB = b.tarih.split('/').reverse().join('-');
+            return new Date(dateA) - new Date(dateB);
+        });
+
+        sorted.forEach(item => {
+            const rawAmount = item.fiyat * item.adet;
+            const comm = rawAmount * commRate;
+            let transactionEffect = 0;
+
+            if (item.islem.toLowerCase() === 'alış') {
+                transactionEffect = (rawAmount + comm);
+                netCashFlow += transactionEffect;
+                totalQty += item.adet;
+            } else {
+                transactionEffect = (rawAmount - comm);
+                netCashFlow -= transactionEffect;
+                totalQty -= item.adet;
+            }
+
+            tableBody.innerHTML += `<tr>
+                <td>${item.tarih}</td><td>${item.hisse}</td><td>${item.islem}</td>
+                <td>${formatTR(item.fiyat)}</td><td>${formatTR(item.adet, 0)}</td>
+                <td>${item.islem === 'Alış' ? '-' : '+'}${formatTR(transactionEffect)} TL</td>
+            </tr>`;
+        });
+
+        const psyMaliyet = totalQty > 0 ? (netCashFlow / totalQty) : 0;
+        const totalValue = totalQty * currentPrice;
+        const unrealized = totalValue - netCashFlow;
+
+        document.getElementById('remainingQty').innerText = formatTR(totalQty, 0);
+        document.getElementById('psyCost').innerText = formatTR(psyMaliyet, 4) + " TL";
+        document.getElementById('unrealizedProfit').innerText = formatTR(unrealized) + " TL";
+
+        if(psyMaliyet < 0) {
+            document.getElementById('psyCost').classList.add('zero-cost');
+        } else {
+            document.getElementById('psyCost').classList.remove('zero-cost');
+        }
+    }
+</script>
+</body>
+</html>
