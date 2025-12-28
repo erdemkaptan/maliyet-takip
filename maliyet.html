@@ -23,9 +23,29 @@
             display: flex; 
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 5px;
+            padding-bottom: 10px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
         }
         h1 { font-size: 18px; margin: 0; text-transform: uppercase; }
+
+        /* Yeni Ana Menü Butonu Stili */
+        .home-btn {
+            text-decoration: none;
+            color: #ffb800;
+            border: 1px solid #ffb800;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 20px;
+            transition: all 0.3s;
+        }
+        .home-btn:hover {
+            background-color: #ffb800;
+            color: #000;
+        }
 
         .controls { 
             display: grid; 
@@ -107,8 +127,8 @@
 
 <div class="container">
     <header>
-         <div class="header-left">
-            <a href="index.html" class="home-btn">&lt; ANA_MENÜ</a>
+        <div class="header-left">
+            <a href="index.html" class="home-btn">&lt; ANA MENÜ</a>
             <h1>BİLGİ TERMİNALİ | PORTFÖY_ANALİZ</h1>
         </div>
         <div id="clock" style="font-size: 12px;"></div>
