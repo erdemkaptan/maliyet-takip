@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skyline Terminal v23.9</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-terminal: #0B0B0B;
+            --amber: #FFB100;
+            --card-bg: #151515;
+            --border-terminal: #2A2A2A;
+            --text-main: #E2E8F0;
+            --text-dim: #94A3B8;
+            --bbg-green: #22C55E;
+            --bbg-red: #EF4444;
+            --bbg-blue: #38BDF8;
+            --mor:#c837b6
+        }
+        body { background-color: var(--bg-terminal); color: var(--text-main); font-family: 'Roboto Mono', monospace; font-size: 0.85rem; }
+        .card { border: 1px solid var(--border-terminal); border-radius: 4px; background-color: var(--card-bg); }
+        .card-header { background-color: #1A1A1A; border-bottom: 1px solid var(--border-terminal); font-weight: 700; color: var(--amber); font-size: 0.7rem; text-transform: uppercase; }
+        .btn-terminal { background-color: transparent; color: var(--amber); border: 1px solid var(--amber); font-weight: 700; font-size: 0.7rem; border-radius: 2px; padding: 3px 10px; transition: all 0.2s; }
+        .btn-terminal:hover { background-color: var(--amber); color: black; }
+        .form-select, .form-control { background-color: #000000; border: 1px solid var(--border-terminal); color: var(--bbg-green); font-family: 'Roboto Mono', monospace; font-size: 0.8rem; }
+        .form-select:focus, .form-control:focus { border-color: var(--amber); background-color: #000000; color: var(--bbg-green); box-shadow: none; }
+        .table { color: var(--text-main); border-color: var(--border-terminal); }
+        .table thead th { color: var(--amber); font-size: 0.65rem; border-bottom: 1px solid var(--border-terminal); background-color: #111; }
+        .table-hover tbody tr:hover { background-color: #1E1E1E; }
+        .kar-pozitif { color: var(--bbg-green) !important; font-weight: 700; }
+        .kar-negatif { color: var(--bbg-red) !important; font-weight: 700; }
+        .summary-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; }
+        .summary-value { font-size: 1.1rem; font-weight: 700; }
+        .fiyat-input { background: #000000; border: 1px solid #333; color: var(--bbg-blue); width: 75px; text-align: center; font-family: 'Roboto Mono', monospace; font-size: 0.8rem; }
+        canvas { max-width: 100%; height: auto !important; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+<div id="app" class="container py-4">
+    
+    <div class="d-flex justify-content-between align-items-end mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h2 class="fw-bold m-0 text-uppercase" style="color: var(--amber); letter-spacing: 1px;">&lt;PORTFÖY YÖNETİM TERMİNALİ&gt;</h2>
+            <p class="small m-0 text-secondary">GÖRSEL PORTFÖY ANALİZ SİSTEMİ</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button @click="yedekIndir" class="btn btn-terminal">YEDEK AL</button>
+            <button @click="$refs.dosyaInput.click()" class="btn btn-terminal">YÜKLE</button>
+            <input type="file" ref="dosyaInput" style="display: none" @change="yedekYukle" accept=".json">
+        </div>
+    </div>
+
+    <div class="row g-2 mb-4 text-center">
+        <div class="col-md-3"><div class="card p-2"><span class="summary-label">TOPLAM MALİYET</span><span class="summary-value" style="color: var(--bbg-blue);">{{ paraFormat(toplamMaliyet) }}</span></div></div>
+        <div class="col-md-3"><div class="card p-2"><span class="summary-label">GÜNCEL DEĞER</span><span class="summary-value" style="color: var(--bbg-blue);">{{ paraFormat(toplamDeger) }}</span></div></div>
+        <div class="col-md-3"><div class="card p-2"><span class="summary-label">AÇIK KÂR/ZARAR</span><span class="summary-value" :class="toplamAnlikKZ >= 0 ? 'kar-pozitif' : 'kar-negatif'">{{ paraFormat(toplamAnlikKZ) }}</span></div></div>
+        <div class="col-md-3"><div class="card p-2"><span class="summary-label">NET REALİZE K/Z</span><span class="summary-value" :class="toplamGerceklesenKZ >= 0 ? 'kar-pozitif' : 'kar-negatif'">{{ paraFormat(toplamGerceklesenKZ) }}</span></div></div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-header">VARLIK GİRİŞİ</div>
+                <div class="card-body p-3">
+                    <form @submit.prevent="varlikEkle">
+                        <div class="mb-2">
+                            <label class="summary-label">VARLIK TÜRÜ</label>
+                            <select v-model="yeniVarlik.tur" class="form-select form-select-sm">
+                                <option value="BIST">BIST HİSSE</option><option value="ETF">YATIRIM FONU</option>
+                                <option value="NAKİT">NAKİT</option><option value="ALTIN">ALTIN/EMTIA</option>
+                                <option value="DÖVİZ">DÖVİZ</option><option value="KRİPTO">KRİPTO VARLIK</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="summary-label">SEMBOL</label>
+                            <select v-model="secilenSembol" class="form-select form-select-sm mb-1" @change="sembolKontrol">
+                                <option disabled value="">Seçiniz...</option>
+                                <option v-for="s in siraliSemboller" :key="s" :value="s">{{ s }}</option>
+                                <option value="MANUEL">-- DİĞER --</option>
+                            </select>
+                            <input v-if="secilenSembol === 'MANUEL'" type="text" v-model="yeniVarlik.sembol" class="form-control form-control-sm" placeholder="Sembol...">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6"><label class="summary-label">ADET</label><input type="number" step="any" v-model="yeniVarlik.adet" class="form-control form-control-sm"></div>
+                            <div class="col-6"><label class="summary-label">B.FİYAT</label><input type="number" step="any" v-model="yeniVarlik.maliyet" class="form-control form-control-sm"></div>
+                        </div>
+                        <button type="submit" class="btn btn-terminal w-100">ALIM KAYDET</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card" v-if="portfoy.length > 0">
+                <div class="card-header">PORTFÖY DAĞILIMI</div>
+                <div class="card-body p-2 text-center">
+                    <canvas id="dagilimChart"></canvas>
+                    <hr class="border-secondary my-2">
+                    <div v-for="item in siraliAgirliklar" :key="item.id" class="mb-2 px-2">
+                        <div class="d-flex justify-content-between align-items-center small">
+                            <span class="fw-bold" style="color: var(--text-dim);">{{ item.sembol }}</span>
+                            <span style="color: var(--bbg-blue);">%{{ sayiFormat(item.yuzde) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="card mb-3">
+                <div class="card-header">AKTİF POZİSYONLAR</div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0 text-center">
+                        <thead>
+                            <tr>
+                                <th class="text-start ps-3">SEMBOL</th><th>ADET</th><th>NET MALIYET</th><th>GÜNCEL</th>
+                                <th>DEĞER</th><th>K/Z (₺)</th><th>K/Z %</th><th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="v in portfoy" :key="v.id">
+                                <td class="text-start ps-3"><div class="fw-bold">{{ v.sembol }}</div><div style="color: var(--text-dim); font-size: 0.6rem;">{{ v.tur }}</div></td>
+                                <td>{{ sayiFormat(v.adet) }}</td>
+                                <td style="color: var(--text-dim);">{{ paraFormat(v.maliyet) }}</td>
+                                <td><input type="number" step="any" v-model="v.guncelFiyat" class="fiyat-input"></td>
+                                <td class="fw-bold">{{ paraFormat(v.adet * v.guncelFiyat) }}</td>
+                                <td :class="tutarKZHesapla(v) >= 0 ? 'kar-pozitif' : 'kar-negatif'">{{ tutarKZHesapla(v) >= 0 ? '+' : '' }}{{ paraFormat(tutarKZHesapla(v)) }}</td>
+                                <td :class="yuzdeHesapla(v) >= 0 ? 'kar-pozitif' : 'kar-negatif'">{{ yuzdeHesapla(v) >= 0 ? '+' : '' }}{{ sayiFormat(yuzdeHesapla(v)) }}%</td>
+                                <td><div class="d-flex gap-1 justify-content-center"><button @click="pozisyonKapatHazirlik(v)" class="btn btn-terminal p-0 px-1" style="font-size: 0.6rem;">SATIŞ</button><button @click="varlikSil(v.id)" class="btn btn-sm text-danger opacity-50 p-0">✕</button></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" v-if="kapananPozisyonlar.length > 0">
+                <div class="card-header">GEÇMİŞ İŞLEMLER</div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0 text-center" style="font-size: 0.75rem;">
+                        <thead>
+                            <tr><th>TARİH</th><th>SEMBOL</th><th>MALIYET</th><th>NET SATIŞ</th><th>NET K/Z</th><th>%</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(p, index) in kapananPozisyonlar" :key="index">
+                                <td style="color: var(--text-dim);">{{ p.tarih }}</td><td class="fw-bold">{{ p.sembol }}</td><td style="color: var(--text-dim);">{{ paraFormat(p.maliyet) }}</td><td>{{ paraFormat(p.satisFiyati) }}</td><td :class="p.karZarar >= 0 ? 'kar-pozitif' : 'kar-negatif'">{{ p.karZarar >= 0 ? '+' : '' }}{{ paraFormat(p.karZarar) }}</td><td :class="p.yuzde >= 0 ? 'kar-pozitif' : 'kar-negatif'">{{ p.yuzde >= 0 ? '+' : '' }}{{ sayiFormat(p.yuzde) }}%</td><td><button @click="gecmisSil(index)" class="btn btn-sm text-muted">✕</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp } = Vue;
+    const STORAGE_KEY = 'portfoy_business_v23';
+    const KOMISYON_ORANI = 0.0009;
+
+    createApp({
+        data() {
+            return {
+                chart: null,
+                secilenSembol: '',
+                sembolListesi: ["AEFES", "AKBNK", "ALARK", "ARCLK", "ASELS", "ASTOR", "BIMAS", "BRSAN", "CCOLA", "CIMSA", "DOAS", "DOHOL", "DSTKF", "EKGYO", "ENKAI", "EREGL", "FROTO", "GARAN", "GUBRF", "HALKB", "HEKTS", "ISCTR", "KCHOL", "KONTR", "KRDMD", "KUYAS", "MAVI", "MGROS", "MIATK", "OYAKC", "PETKM", "PGSUS", "SAHOL", "SASA", "SISE", "SOKM", "TAVHL", "TCELL", "THYAO", "TKFEN", "TOASO", "TRALT", "TRMET", "TSKB", "TTKOM", "TUPRS", "ULKER", "VAKBN", "GLDTR", "ALTINS1", "KLU_PPF"],
+                yeniVarlik: { tur: 'BIST', sembol: '', adet: '', maliyet: '' },
+                portfoy: [],
+                kapananPozisyonlar: []
+            }
+        },
+        computed: {
+            siraliSemboller() { return [...this.sembolListesi].sort(); },
+            toplamMaliyet() { return this.portfoy.reduce((t, v) => t + (parseFloat(v.adet) * parseFloat(v.maliyet)), 0); },
+            toplamDeger() { return this.portfoy.reduce((t, v) => t + (parseFloat(v.adet) * (parseFloat(v.guncelFiyat) || 0)), 0); },
+            toplamAnlikKZ() { return this.toplamDeger - this.toplamMaliyet; },
+            toplamGerceklesenKZ() { return this.kapananPozisyonlar.reduce((t, p) => t + p.karZarar, 0); },
+            siraliAgirliklar() {
+                if (this.toplamDeger === 0) return [];
+                return this.portfoy.map(v => ({ ...v, yuzde: ((parseFloat(v.adet) * parseFloat(v.guncelFiyat) / this.toplamDeger) * 100).toFixed(2) })).sort((a,b) => b.yuzde - a.yuzde);
+            }
+        },
+        mounted() { 
+            const veri = localStorage.getItem(STORAGE_KEY); 
+            if (veri) { try { const p = JSON.parse(veri); this.portfoy = p.portfoy || []; this.kapananPozisyonlar = p.kapananPozisyonlar || []; } catch(e) { console.error(e); } }
+            this.$nextTick(() => { this.grafikGuncelle(); });
+        },
+        watch: { 
+            portfoy: { handler() { this.veriyiKaydet(); this.grafikGuncelle(); }, deep: true }, 
+            kapananPozisyonlar: { handler() { this.veriyiKaydet(); }, deep: true } 
+        },
+        methods: {
+            grafikGuncelle() {
+                const ctx = document.getElementById('dagilimChart');
+                if (!ctx) return;
+                
+                const labels = this.portfoy.map(v => v.sembol);
+                const data = this.portfoy.map(v => (v.adet * v.guncelFiyat).toFixed(2));
+                
+                if (this.chart) this.chart.destroy();
+                
+                this.chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: ['#38BDF8', '#22C55E', '#FFB100', '#EF4444', '#A855F7', '#EC4899', '#64748B'],
+                            borderWidth: 0,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        cutout: '70%',
+                        plugins: { legend: { display: false } },
+                        animation: { animateRotate: true }
+                    }
+                });
+            },
+            sembolKontrol() { this.yeniVarlik.sembol = this.secilenSembol !== 'MANUEL' ? this.secilenSembol : ''; },
+            veriyiKaydet() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ portfoy: this.portfoy, kapananPozisyonlar: this.kapananPozisyonlar })); },
+            varlikEkle() { 
+                if(!this.yeniVarlik.sembol) return alert("Seçim yapın.");
+                const netMaliyet = parseFloat(this.yeniVarlik.maliyet) * (1 + KOMISYON_ORANI);
+                this.portfoy.push({ id: Date.now(), ...this.yeniVarlik, sembol: this.yeniVarlik.sembol.toUpperCase(), maliyet: netMaliyet, guncelFiyat: parseFloat(this.yeniVarlik.maliyet) }); 
+                this.yeniVarlik.sembol = ''; this.yeniVarlik.adet = ''; this.yeniVarlik.maliyet = ''; this.secilenSembol = '';
+            },
+            pozisyonKapatHazirlik(v) {
+                const tarih = prompt("Tarih:", new Date().toLocaleDateString('tr-TR'));
+                const satis = prompt(`Brüt Satış:`, v.guncelFiyat);
+                if (tarih && satis) {
+                    const netSatis = parseFloat(satis) * (1 - KOMISYON_ORANI);
+                    const kZ = (netSatis - v.maliyet) * v.adet;
+                    this.kapananPozisyonlar.unshift({ tarih, sembol: v.sembol, maliyet: v.maliyet, satisFiyati: netSatis, karZarar: kZ, yuzde: (((netSatis - v.maliyet) / v.maliyet) * 100).toFixed(2) });
+                    this.portfoy = this.portfoy.filter(i => i.id !== v.id);
+                }
+            },
+            varlikSil(id) { if(confirm('Sil?')) this.portfoy = this.portfoy.filter(v => v.id !== id); },
+            gecmisSil(index) { if(confirm('Sil?')) this.kapananPozisyonlar.splice(index, 1); },
+            paraFormat(d) { return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 2 }).format(d || 0); },
+            sayiFormat(d) { return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(d || 0); },
+            tutarKZHesapla(v) { return (v.guncelFiyat - v.maliyet) * v.adet; },
+            yuzdeHesapla(v) { return v.maliyet === 0 ? 0 : (((v.guncelFiyat - v.maliyet) / v.maliyet) * 100).toFixed(2); },
+            yedekIndir() {
+                const s = new Date();
+                const d = `${String(s.getDate()).padStart(2,'0')}_${String(s.getMonth()+1).padStart(2,'0')}_${s.getFullYear().toString().slice(-2)}`;
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([JSON.stringify({ portfoy: this.portfoy, kapananPozisyonlar: this.kapananPozisyonlar })], { type: 'application/json' }));
+                a.download = `${d}_terminal_yedek.json`; a.click();
+            },
+            yedekYukle(e) { const f = e.target.files[0]; const r = new FileReader(); r.onload = (ev) => { const data = JSON.parse(ev.target.result); this.portfoy = data.portfoy || []; this.kapananPozisyonlar = data.kapananPozisyonlar || []; this.veriyiKaydet(); this.grafikGuncelle(); }; r.readAsText(f); }
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
