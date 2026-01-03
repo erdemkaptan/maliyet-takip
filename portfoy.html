@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Görsel Terminal </title>
+    <title>Skyline Terminal v23.9</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -15,14 +15,25 @@
             --card-bg: rgba(51, 65, 85, 0.45);
             --border-terminal: rgba(255, 255, 255, 0.15);
             --text-main: #E2E8F0;
-            --text-dim: #94A3B8;
+            --text-dim: #cfd4db;
             --bbg-green: #22C55E;
             --bbg-red: #EF4444;
             --bbg-blue: #38BDF8;
             --mor:#c837b6
+            --bg-terminal: #f0f4f8;
+            --amber: #4f46e5; /* Indigo - Modern ve okunaklı ana renk */
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --border-terminal: rgba(0, 0, 0, 0.05);
+            --text-main: #334155; /* Slate 700 - Koyu gri metin */
+            --text-dim: #64748b; /* Slate 500 - Pastel gri */
+            --bbg-green: #059669; /* Emerald 600 - Pastel ama okunaklı yeşil */
+            --bbg-red: #e11d48; /* Rose 600 - Pastel ama okunaklı kırmızı */
+            --bbg-blue: #0284c7; /* Sky 600 */
+            --mor:#9333ea;
         }
         body { 
             background: radial-gradient(circle at 50% -20%, #475569, #0f172a);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: var(--text-main); 
             font-family: 'Roboto Mono', monospace; 
             font-size: 0.85rem; 
@@ -31,11 +42,13 @@
         .card { 
             border: 1px solid var(--border-terminal); 
             border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: 1px solid rgba(255, 255, 255, 0.6);
             border-radius: 12px; 
             background-color: var(--card-bg); 
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.05);
             transition: transform 0.2s, box-shadow 0.2s;
             animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
         }
@@ -43,6 +56,8 @@
             transform: translateY(-2px);
             box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 177, 0, 0.05);
             border-color: rgba(255, 177, 0, 0.2);
+            box-shadow: 0 12px 30px 0 rgba(0, 0, 0, 0.1), 0 0 20px rgba(79, 70, 229, 0.1);
+            border-color: rgba(79, 70, 229, 0.2);
         }
         
         @keyframes fadeInUp {
@@ -62,6 +77,7 @@
 
         .card-header { 
             background-color: rgba(255, 255, 255, 0.02); 
+            background-color: rgba(79, 70, 229, 0.05); 
             border-bottom: 1px solid var(--border-terminal); 
             font-weight: 700; 
             color: var(--amber); 
@@ -69,9 +85,11 @@
             text-transform: uppercase; 
             border-radius: 12px 12px 0 0;
             text-shadow: 0 0 8px rgba(255, 177, 0, 0.3);
+            text-shadow: none;
         }
         .btn-terminal { 
             background-color: rgba(255, 177, 0, 0.05); 
+            background-color: rgba(255, 255, 255, 0.5); 
             color: var(--amber); 
             border: 1px solid var(--amber); 
             font-weight: 700; 
@@ -83,24 +101,38 @@
             display: inline-flex; 
             align-items: center; 
             box-shadow: 0 0 10px rgba(255, 177, 0, 0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
         .btn-terminal:hover { background-color: var(--amber); color: black; box-shadow: 0 0 20px var(--amber); }
         .form-select, .form-control { background-color: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-terminal); color: var(--text-main); font-family: 'Roboto Mono', monospace; font-size: 0.8rem; border-radius: 6px; }
         .form-select:focus, .form-control:focus { border-color: var(--amber); background-color: rgba(0, 0, 0, 0.6); color: var(--amber); box-shadow: 0 0 15px rgba(255, 177, 0, 0.2); }
+        .btn-terminal:hover { background-color: var(--amber); color: white; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); }
+        .form-select, .form-control { background-color: #ffffff; border: 1px solid #cbd5e1; color: var(--text-main); font-family: 'Roboto Mono', monospace; font-size: 0.8rem; border-radius: 6px; }
+        .form-select:focus, .form-control:focus { border-color: var(--amber); background-color: #ffffff; color: var(--text-main); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
         .table { color: var(--text-main); border-color: var(--border-terminal); --bs-table-bg: transparent; }
         .table thead th { color: var(--amber); font-size: 0.65rem; border-bottom: 1px solid var(--border-terminal); background-color: rgba(255, 255, 255, 0.02); text-shadow: 0 0 5px rgba(255, 177, 0, 0.4); }
         .table-hover tbody tr:hover { background-color: rgba(255, 177, 0, 0.08); box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
         .kar-pozitif { color: var(--bbg-green) !important; font-weight: 700; text-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
         .kar-negatif { color: var(--bbg-red) !important; font-weight: 700; text-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+        .table thead th { color: var(--text-dim); font-weight: 700; font-size: 0.65rem; border-bottom: 1px solid var(--border-terminal); background-color: rgba(248, 250, 252, 0.5); text-shadow: none; }
+        .table-hover tbody tr:hover { background-color: rgba(255, 255, 255, 0.6); box-shadow: none; }
+        .kar-pozitif { color: var(--bbg-green) !important; font-weight: 700; text-shadow: none; }
+        .kar-negatif { color: var(--bbg-red) !important; font-weight: 700; text-shadow: none; }
         .summary-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
         .summary-value { font-size: 1.1rem; font-weight: 700; text-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
         .fiyat-input { background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-terminal); color: var(--bbg-blue); width: 75px; text-align: center; font-family: 'Roboto Mono', monospace; font-size: 0.8rem; border-radius: 4px; }
         .fiyat-input:focus { outline: none; border-color: var(--bbg-blue); box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
         canvas { max-width: 100%; height: auto !important; margin: 10px 0; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+        .summary-value { font-size: 1.1rem; font-weight: 700; text-shadow: none; }
+        .fiyat-input { background: #ffffff; border: 1px solid #cbd5e1; color: var(--bbg-blue); width: 75px; text-align: center; font-family: 'Roboto Mono', monospace; font-size: 0.8rem; border-radius: 4px; }
+        .fiyat-input:focus { outline: none; border-color: var(--bbg-blue); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+        canvas { max-width: 100%; height: auto !important; margin: 10px 0; filter: none; }
         
         /* Ana Sayfa butonu için özel vurgu */
         .btn-home { border-color: var(--text-dim); color: var(--text-dim); box-shadow: none; }
         .btn-home:hover { background-color: var(--text-dim); color: #000; border-color: var(--text-dim); box-shadow: 0 0 15px var(--text-dim); }
+        .btn-home { border-color: var(--text-dim); color: var(--text-dim); box-shadow: none; background: transparent; }
+        .btn-home:hover { background-color: var(--text-dim); color: #fff; border-color: var(--text-dim); box-shadow: none; }
     </style>
 </head>
 <body>
@@ -110,6 +142,7 @@
     <div class="d-flex justify-content-between align-items-end mb-4 border-bottom border-secondary pb-3">
         <div>
             <h2 class="fw-bold m-0 text-uppercase" style="color: var(--amber); letter-spacing: 1px; text-shadow: 0 0 10px rgba(255, 177, 0, 0.4);">&lt;PORTFÖY YÖNETİM TERMİNALİ&gt;</h2>
+            <h2 class="fw-bold m-0 text-uppercase" style="color: var(--amber); letter-spacing: 1px;">&lt;PORTFÖY YÖNETİM TERMİNALİ&gt;</h2>
             <p class="small m-0 text-secondary">GÖRSEL PORTFÖY ANALİZ SİSTEMİ</p>
         </div>
         <div class="d-flex gap-2">
@@ -189,9 +222,9 @@
                         </thead>
                         <tbody v-if="portfoy.length > 0">
                             <tr v-for="v in portfoy" :key="v.id">
-                                <td class="text-start ps-3"><div class="fw-bold">{{ v.sembol }}</div><div style="color: var(--text-dim); font-size: 0.6rem;">{{ v.tur }}</div></td>
+                                <td class="text-start ps-3"><div class="fw-bold">{{ v.sembol }}</div><div style="color: var(--text-main); font-size: 0.6rem; opacity: 0.8;">{{ v.tur }}</div></td>
                                 <td>{{ sayiFormat(v.adet) }}</td>
-                                <td style="color: var(--text-dim);">{{ paraFormat(v.maliyet) }}</td>
+                                <td>{{ paraFormat(v.maliyet) }}</td>
                                 <td><input type="number" step="any" min="0" v-model.number="v.guncelFiyat" class="fiyat-input"></td>
                                 <td class="fw-bold">{{ paraFormat(v.adet * v.guncelFiyat) }}</td>
                                 <td :class="tutarKZHesapla(v) >= 0 ? 'kar-pozitif' : 'kar-negatif'">{{ tutarKZHesapla(v) >= 0 ? '+' : '' }}{{ paraFormat(tutarKZHesapla(v)) }}</td>
